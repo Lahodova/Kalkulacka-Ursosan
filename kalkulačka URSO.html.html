@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Kalkulačka dávkování – Ursosan</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      background: #ffffff;
+      color: #2b1f34;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header img {
+      max-width: 240px;
+      height: auto;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      color: #5C1146; /* bordó */
+      font-size: 22px;
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    p {
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+
+    .strength-group {
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .strength-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #c9a6c2;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #5C1146;
+      box-shadow: 0 0 0 2px rgba(92, 17, 70, 0.15);
+    }
+
+    button {
+      width: 100%;
+      background: #5C1146;
+      color: #ffffff;
+      font-weight: bold;
+      margin-top: 20px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #430d38;
+      transform: translateY(-1px);
+    }
+
+    #result {
+      margin-top: 22px;
+      padding: 16px;
+      background: #ffffff;
+      border-left: 4px solid #5C1146;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      font-size: 14px;
+    }
+
+    small {
+      color: #6a5a78;
+    }
+
+    .note {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #6a5a78;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- Logo PRO.MED.CS – ulož soubor PRO.MED.CS-logo.jpg do stejné složky -->
+    <img src="PRO.MED.CS-logo.jpg" alt="PRO.MED.CS logo">
+    <h1>Kalkulačka dávkování<br>Ursosan / Ursosan FORTE</h1>
+  </header>
+
+  <p>
+    <small>
+      Demonstrativní pomůcka vycházející z dávkování v mg/kg/den dle SPC.<br>
+      Nenahrazuje klinické rozhodnutí lékaře.
+    </small>
+  </p>
+
+  <label>Volba síly přípravku:</label>
+  <div class="strength-group">
+    <label class="strength-option">
+      <input type="radio" name="strength" value="250">
+      URSOSAN 250 mg
+    </label>
+    <label class="strength-option">
+      <input type="radio" name="strength" value="500" checked>
+      URSOSAN 500 mg
+    </label>
+  </div>
+  <div class="note">
+    Kalkulačka zaokrouhluje dávku na celé jednotky směrem dolů (bez půlení).
+  </div>
+
+  <label for="indication">Indikace:</label>
+  <select id="indication">
+    <option value="psc">PSC – Primární sklerotizující cholangitida</option>
+    <option value="pbc">PBC – Primární biliární cirhóza I.–II. st. a jiné stavy s intrahepatální cholestázou</option>
+    <option value="cholelithiasis">Cholelitiáza – rozpouštění cholesterolových žlučových kamenů</option>
+    <option value="hepatitis">Hepatitidy různé etiologie s cholestatickým syndromem (NASH, DILI, virové hepatitidy)</option>
+    <option value="icp">ICP – Intrahepatální cholestáza těhotných</option>
+    <option value="psc_uc">PSC + UC – chemoprevence kolorektálního karcinomu</option>
+    <option value="cf">Poruchy jater a žlučových cest při cystické fibróze dětí</option>
+    <option value="aih_overlap">PBC + AIH / PSC + AIH – překryvné autoimunitní syndromy</option>
+    <option value="gastritis">Reaktivní gastritida při duodenogastrickém refluxu</option>
+  </select>
+
+  <label for="weight">Tělesná hmotnost (kg):</label>
+  <input type="number" id="weight" min="5" max="200" step="0.1" />
+
+  <button onclick="calculateDose()">Spočítat dávku</button>
+
+  <div id="result"></div>
+
+  <script>
+    function calculateDose() {
+      const strengthInput = document.querySelector('input[name="strength"]:checked');
+      if (!strengthInput) {
+        document.getElementById('result').innerHTML =
+          '<strong>Prosím zvolte sílu přípravku (250 mg nebo 500 mg).</strong>';
+        return;
+      }
+
+      const strength = parseInt(strengthInput.value, 10); // mg v jedné jednotce
+      const indication = document.getElementById('indication').value;
+      const weight = parseFloat(document.getElementById('weight').value);
+
+      if (indication !== 'gastritis' && (isNaN(weight) || weight <= 0)) {
+        document.getElementById('result').innerHTML =
+          '<strong>Prosím zadejte platnou hmotnost.</strong>';
+        return;
+      }
+
+      let mgPerKg = null;
+      let indikaceText = '';
+      let scheduleNote = '';
+      let kontraindikaceText = '';
+      let dailyDoseMg = null;
+      let resultHtml = '';
+      let offLabel = false; // true, pokud daná síla nemá indikaci v SPC
+
+      // Nastavení dávkování dle indikace
+      switch (indication) {
+        case 'psc':
+          mgPerKg = 15; // rozmezí 10–15 mg/kg, používáme horní hranici
+          indikaceText = 'PSC – Primární sklerotizující cholangitida';
+          scheduleNote =
+            'Obvykle 2–3 dílčí dávky denně, individuálně dle klinického stavu. Nedoporučuje se překračovat dávky kolem 15 mg/kg/den.';
+          kontraindikaceText =
+            'Závažná dekompenzovaná jaterní cirhóza, obstrukce žlučových cest, akutní cholecystitida či cholangitida, přecitlivělost na ursodeoxycholovou kyselinu nebo pomocné látky. Vysoké dávky 28–30 mg/kg/den byly u PSC spojeny s vyšším výskytem závažných nežádoucích účinků.';
+          // PSC je v SPC pro URSOSAN 250 mg, ne však pro URSOSAN 500 mg
+          if (strength === 500) offLabel = true;
+          break;
+
+        case 'pbc':
+          mgPerKg = 15; // rozmezí 10–15 mg/kg
+          indikaceText =
+            'PBC – Primární biliární cirhóza I. a II. stádia a jiné stavy spojené s intrahepatální cholestázou';
+          scheduleNote =
+            'Celková denní dávka se obvykle dělí do 2–3 dávek, po úvodním období je možné podávat 1× denně večer.';
+          kontraindikaceText =
+            'Dekompenzovaná jaterní cirhóza, obstrukce žlučových cest, akutní zánět žlučníku nebo žlučových cest, přecitlivělost na ursodeoxycholovou kyselinu nebo pomocné látky.';
+          // PBC je v SPC pro obě síly
+          offLabel = false;
+          break;
+
+        case 'cholelithiasis':
+          mgPerKg = 10;
+          indikaceText =
+            'Cholelitiáza – rozpouštění cholesterolových žlučových kamenů';
+          scheduleNote =
+            'Dávka se zpravidla podává 1× denně večer. URSOSAN se polyká celý, nerozkousaný, zapíjí se dostatečným množstvím tekutiny. Léčba trvá obvykle 6–24 měsíců.';
+          kontraindikaceText =
+            'Kalcifikované nebo pigmentové kameny, rentgenkontrastní kameny, nefunkční žlučník, obstrukce žlučových cest, akutní cholecystitida či cholangitida, časté biliární koliky, přecitlivělost na léčivou látku.';
+          // Rozpouštění kamenů je v SPC i pro 250 mg, i pro 500 mg
+          offLabel = false;
+          break;
+
+        case 'hepatitis':
+          mgPerKg = 15; // rozmezí 10–15 mg/kg
+          indikaceText =
+            'Hepatitidy různé etiologie s cholestatickým syndromem (např. NASH, DILI, virové hepatitidy)';
+          scheduleNote =
+            'Celková denní dávka se obvykle dělí do 2–3 dávek během dne.';
+          kontraindikaceText =
+            'Obecné kontraindikace UDCA: dekompenzované jaterní onemocnění, obstrukce žlučových cest, akutní cholecystitida nebo cholangitida, přecitlivělost na ursodeoxycholovou kyselinu nebo pomocné látky.';
+          // Hepatitidy s cholestatickým syndromem jsou v SPC pro URSOSAN 250 mg, nikoli pro URSOSAN 500 mg
+          if (strength === 500) offLabel = true;
+          break;
+
+        case 'icp':
+          mgPerKg = 20; // rozmezí 10–20 mg/kg, používáme 20
+          indikaceText = 'ICP – Intrahepatální cholestáza těhotných';
+          scheduleNote =
+            'Dávka 10–20 mg/kg/den, v praxi často kolem 20 mg/kg/den rozdělených do 2–3 dávek. Léčba probíhá vždy pod dohledem specialisty v těhotenské poradně.';
+          kontraindikaceText =
+            'Stejné jako u UDCA obecně (obstrukce žlučových cest, akutní zánět žlučníku/žlučových cest, dekompenzované jaterní onemocnění, přecitlivělost).';
+          // ICP není výslovně v SPC ani pro 250 mg, ani pro 500 mg
+          offLabel = true;
+          break;
+
+        case 'psc_uc':
+          mgPerKg = 15; // rozmezí 8–15 mg/kg
+          indikaceText =
+            'PSC + UC – PSC s ulcerózní kolitidou (UDCA jako chemoprevence kolorektálního karcinomu)';
+          scheduleNote =
+            'Dávkování se obvykle pohybuje v rozmezí 8–15 mg/kg/den, v kalkulačce používáme 15 mg/kg/den. Podává se ve 2–3 dílčích dávkách.';
+          kontraindikaceText =
+            'Obecné kontraindikace UDCA: dekompenzované jaterní onemocnění, obstrukce žlučových cest, akutní cholecystitida nebo cholangitida, přecitlivělost na ursodeoxycholovou kyselinu nebo pomocné látky.';
+          // PSC + UC není výslovně v SPC žádné síly
+          offLabel = true;
+          break;
+
+        case 'cf':
+          mgPerKg = 20; // při potřebě lze navýšit až na 30 mg/kg/den
+          indikaceText =
+            'Poruchy jater a žlučových cest při cystické fibróze dětí';
+          scheduleNote =
+            'Obvyklá dávka je 20 mg/kg/den rozdělená do 2–3 dávek; v nutných případech lze individuálně zvýšit až na 30 mg/kg/den podle SPC a klinického uvážení.';
+          kontraindikaceText =
+            'Obecné kontraindikace UDCA: dekompenzované jaterní onemocnění, obstrukce žlučových cest, akutní zánět žlučníku/žlučových cest, přecitlivělost na ursodeoxycholovou kyselinu nebo pomocné látky.';
+          // CF je v SPC pro URSOSAN 250 mg i URSOSAN 500 mg
+          offLabel = false;
+          break;
+
+        case 'aih_overlap':
+          mgPerKg = 15; // rozmezí 13–15 mg/kg
+          indikaceText =
+            'PBC + AIH / PSC + AIH – překryvné autoimunitní syndromy (UDCA ± azathioprin, prednison)';
+          scheduleNote =
+            'UDCA se podává v dávce 13–15 mg/kg/den, obvykle rozdělené do 2–3 dávek. Současně se používá imunosupresivní léčba (např. azathioprin, prednison) dle doporučení hepatologa.';
+          kontraindikaceText =
+            'Stejná jako u UDCA obecně: dekompenzovaná jaterní cirhóza, obstrukce žlučových cest, akutní cholecystitida nebo cholangitida, přecitlivělost na léčivou látku nebo pomocné látky.';
+          // překryvné syndromy nejsou výslovně v SPC žádné síly
+          offLabel = true;
+          break;
+
+        case 'gastritis':
+          indikaceText = 'Reaktivní gastritida při duodenogastrickém refluxu';
+          scheduleNote =
+            'Doporučená dávka je 250 mg 1× denně na noc. Léčba je obvykle krátkodobá (cca 10–14 dní), v kombinaci s úpravou režimu a případně PPI.';
+          kontraindikaceText =
+            'Obecné kontraindikace UDCA (dekompenzované jaterní onemocnění, obstrukce žlučových cest, akutní zánět žlučníku/žlučových cest, přecitlivělost).';
+          break;
+      }
+
+      // Speciální logika pro reaktivní gastritidu – pevná dávka 250 mg na noc
+      if (indication === 'gastritis') {
+        if (strength === 250) {
+          dailyDoseMg = 250;
+          const units = 1;
+          offLabel = false; // gastritida je v SPC pro URSOSAN 250 mg
+          resultHtml =
+            '<strong>Indikace:</strong> ' + indikaceText + '<br>' +
+            '<strong>Zvolená síla:</strong> URSOSAN 250 mg<br>' +
+            '<strong>Doporučená dávka:</strong> 250 mg 1× denně na noc<br>' +
+            '<strong>URSOSAN 250 mg:</strong> ' + units + ' jednotka na noc<br><br>' +
+            '<strong>Dávkovací poznámka:</strong> ' + scheduleNote + '<br><br>' +
+            '<strong>Kontraindikace:</strong> ' + kontraindikaceText;
+        } else {
+          // síla 500 mg – v SPC pro tuto indikaci není, navíc nechceme půlit
+          offLabel = true;
+          resultHtml =
+            '<strong>Indikace:</strong> ' + indikaceText + '<br>' +
+            '<strong>Zvolená síla:</strong> URSOSAN 500 mg<br><br>' +
+            'Pro tuto indikaci je v materiálech a SPC uváděna dávka 250 mg 1× denně na noc. ' +
+            'Kalkulačka nepočítá s půlením tablet, proto doporučujeme použít sílu 250 mg (URSOSAN 250 mg).<br><br>' +
+            '<strong>Dávkovací poznámka:</strong> ' + scheduleNote + '<br><br>' +
+            '<strong>Kontraindikace:</strong> ' + kontraindikaceText;
+        }
+
+        if (offLabel) {
+          resultHtml +=
+            '<br><br><em>*Tato indikace ve zvolené síle není výslovně uvedena v SPC přípravku. ' +
+            'Dávkování vychází z odborných materiálů a slouží pouze jako orientační pomůcka.</em>';
+        }
+
+        resultHtml +=
+          '<br><br><small>Text je orientační shrnutí vybraných bodů z SPC. Vždy se řiďte úplným zněním SPC a klinickým úsudkem.</small>';
+
+        document.getElementById('result').innerHTML = resultHtml;
+        return;
+      }
+
+      // Pro všechny ostatní indikace počítáme mg/kg/den
+      dailyDoseMg = weight * mgPerKg;
+      const rawUnits = dailyDoseMg / strength;
+      const wholeUnits = Math.floor(rawUnits); // zaokrouhlení na celé jednotky dolů
+
+      let roundedDailyMg = wholeUnits * strength;
+      let effectiveMgPerKg = wholeUnits > 0 ? (roundedDailyMg / weight) : 0;
+
+      // Pokud vyjde 0 jednotek (velmi nízká hmotnost / dávka), raději upozornění
+      if (wholeUnits === 0) {
+        roundedDailyMg = 0;
+        effectiveMgPerKg = 0;
+      }
+
+      resultHtml =
+        '<strong>Indikace:</strong> ' + indikaceText + '<br>' +
+        '<strong>Zvolená síla:</strong> URSOSAN ' + strength + ' mg<br>' +
+        '<strong>Hmotnost pacienta:</strong> ' + weight.toFixed(1) + ' kg<br>' +
+        '<strong>Výchozí dávka:</strong> ' + mgPerKg.toFixed(0) + ' mg/kg/den<br>' +
+        '<strong>Vypočtená dávka:</strong> ' + dailyDoseMg.toFixed(0) + ' mg/den<br>';
+
+      if (wholeUnits > 0) {
+        resultHtml +=
+          '<strong>Doporučená dávka po zaokrouhlení na celé jednotky:</strong> ' +
+          roundedDailyMg + ' mg/den (' + wholeUnits + ' × ' + strength + ' mg)<br>' +
+          '<strong>Efektivní dávka po zaokrouhlení:</strong> ' + effectiveMgPerKg.toFixed(1) + ' mg/kg/den<br><br>';
+      } else {
+        resultHtml +=
+          '<strong>Doporučená dávka po zaokrouhlení:</strong> pod 1 jednotku při zvoleném dávkování – ' +
+          'je nutné individuálně upravit schéma nebo použít jinou lékovou formu.<br><br>';
+      }
+
+      resultHtml +=
+        '<strong>Dávkovací poznámka:</strong> ' + scheduleNote + '<br><br>' +
+        '<strong>Kontraindikace:</strong> ' + kontraindikaceText;
+
+      if (offLabel) {
+        resultHtml +=
+          '<br><br><em>*Tato indikace ve zvolené síle není výslovně uvedena v SPC přípravku. ' +
+          'Dávkování vychází z odborných materiálů a slouží pouze jako orientační pomůcka.</em>';
+      }
+
+      resultHtml +=
+        '<br><br><small>Text je orientační shrnutí vybraných bodů z SPC. Vždy se řiďte úplným zněním SPC a klinickým úsudkem.</small>';
+
+      document.getElementById('result').innerHTML = resultHtml;
+    }
+  </script>
+</body>
+</html>
+
